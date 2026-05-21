@@ -11,12 +11,6 @@ export default function MagneticScroll({ children, sectionsRef }) {
     const container = document.querySelector(".app");
     if (!container) return;
 
-    const preventDefaultScroll = (e) => {
-      if (!isScrollingRef.current) {
-        e.preventDefault();
-      }
-    };
-
     const scrollToSection = (index) => {
       if (index < 0 || index >= sections.length) return;
       if (isScrollingRef.current) return;
@@ -35,6 +29,7 @@ export default function MagneticScroll({ children, sectionsRef }) {
       }, 800);
     };
 
+    // Обработчик колеса мыши (десктоп)
     const handleWheel = (e) => {
       if (isScrollingRef.current) return;
 
@@ -53,6 +48,34 @@ export default function MagneticScroll({ children, sectionsRef }) {
       scrollToSection(newIndex);
     };
 
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    const handleTouchStart = (e) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e) => {
+      if (isScrollingRef.current) return;
+
+      touchEndY = e.changedTouches[0].clientY;
+      const delta = touchStartY - touchEndY;
+
+      let newIndex = currentIndexRef.current;
+
+      if (Math.abs(delta) > 30) {
+        if (delta > 0 && currentIndexRef.current < sections.length - 1) {
+          newIndex = currentIndexRef.current + 1;
+        } else if (delta < 0 && currentIndexRef.current > 0) {
+          newIndex = currentIndexRef.current - 1;
+        } else {
+          return;
+        }
+        e.preventDefault();
+        scrollToSection(newIndex);
+      }
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -64,17 +87,23 @@ export default function MagneticScroll({ children, sectionsRef }) {
           }
         });
       },
-      { threshold: 0.5 },
+      { threshold: 0.4 },
     );
 
     sections.forEach((section) => observer.observe(section));
 
+    // Отключаем стандартный скролл и вешаем события
     container.addEventListener("wheel", handleWheel, { passive: false });
+    container.addEventListener("touchstart", handleTouchStart, { passive: false });
+    container.addEventListener("touchend", handleTouchEnd, { passive: false });
     container.style.overflow = "hidden";
     container.style.height = "100vh";
+    container.style.position = "relative";
 
     return () => {
       container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchend", handleTouchEnd);
       container.style.overflow = "";
       container.style.height = "";
       observer.disconnect();
