@@ -1,0 +1,17 @@
+.text-type {
+  display: block;
+  white-space: pre-wrap;
+  text-align: center;
+}
+
+.text-type__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.text-type__line {
+  display: block;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
